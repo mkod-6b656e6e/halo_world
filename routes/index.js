@@ -1,12 +1,13 @@
 var express = require('express');
 var router = express.Router();
+var request = require('request')
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
   res.render('index', { title: 'Express' });
 });
 
-//copied verification code
+/* verify webhook */
 router.get('/webhook', function(req, res) {
   if (req.query['hub.verify_token'] === 'very_secured_token') {
     res.send(req.query['hub.challenge']);
@@ -14,27 +15,6 @@ router.get('/webhook', function(req, res) {
     res.send('Error, wrong validation token');
   }
 });
-
-
-//Receive message
-router.post('/webhook/', function (req, res) {
-  const events = req.body.entry[0].messaging;
-  for (i = 0; i < events.length; i++) {
-    const event = req.body.entry[0].messaging[i];
-    if (event.message && event.message.text) {
-      const text = event.message.text;
-      console.log(text)
-      sendTextMessage(sender, "Text received, echo: " + text);
-
-
-    }
-  }
-  res.sendStatus(200);
-});
-
-
-//POST message
-var request = require('request')
 
 const ACCESS_TOKEN = process.env.FB_ACCESS_TOKEN
 
@@ -56,9 +36,20 @@ function sendTextMessage(sender, text) {
   });
 }
 
-
-
-
-
+/* webhook */
+router.post('/webhook', function (req, res) {
+  console.log('webhook!')
+  const events = req.body.entry[0].messaging;
+  for (i = 0; i < events.length; i++) {
+    const event = req.body.entry[0].messaging[i];
+    const sender = event.sender.id;
+    if (event.message && event.message.text) {
+      const text = event.message.text;
+      console.log(text)
+      sendTextMessage(sender, "Text received, echo: " + text);
+    }
+  }
+  res.sendStatus(200);
+});
 
 module.exports = router;
